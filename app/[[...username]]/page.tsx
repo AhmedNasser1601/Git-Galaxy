@@ -10,10 +10,10 @@ export default function GitGalaxy() {
   const params = useParams();
   const router = useRouter();
 
-  // 1. Read the URL. If the user goes to /ahmednasser1601, it captures it.
+  // 1. Read the URL to see if a username was shared
   const initialUser = params?.username ? (params.username as string[])[0] : "";
 
-  // 2. Set the initial state to the URL parameter
+  // 2. Set the state
   const [searchInput, setSearchInput] = useState(initialUser);
   const [activeUser, setActiveUser] = useState("");
   const [repos, setRepos] = useState<any[]>([]);
@@ -22,14 +22,15 @@ export default function GitGalaxy() {
   const [orbitPaused, setOrbitPaused] = useState(false);
 
   useEffect(() => {
+    // Clean up if search box is emptied
     if (!searchInput) {
       setRepos([]);
       setActiveUser("");
-      router.replace('/'); // Clean up the URL if the search box is empty
+      router.replace('/'); 
       return;
     }
 
-    // 3. BONUS: Silently update the browser URL when typing a new search!
+    // Silently update the URL bar when typing a new search
     if (searchInput !== initialUser) {
       router.replace(`/${searchInput}`);
     }
@@ -76,7 +77,7 @@ export default function GitGalaxy() {
     }, 800);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchInput, initialUser, router]); // Added router and initialUser to dependencies
+  }, [searchInput, initialUser, router]); 
 
   return (
     <div className="w-screen h-screen bg-[#020205] overflow-hidden relative">
