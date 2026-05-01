@@ -22,7 +22,7 @@ export function GalaxyCanvas({
   return (
     <Canvas
       camera={{ position: [0, 40, 60], fov: 45 }}
-      className="absolute inset-0 cursor-crosshair z-0"
+      className="absolute inset-0 z-0"
     >
       <ambientLight intensity={0.2} />
       <pointLight
@@ -42,6 +42,7 @@ export function GalaxyCanvas({
         speed={1}
       />
 
+      {/* Pauses the camera spin when hovered */}
       <OrbitControls
         enablePan={true}
         enableZoom={true}
@@ -67,6 +68,7 @@ export function GalaxyCanvas({
           key={repo.id}
           repo={repo}
           index={index}
+          orbitPaused={orbitPaused}
           setOrbitPaused={setOrbitPaused}
         />
       ))}

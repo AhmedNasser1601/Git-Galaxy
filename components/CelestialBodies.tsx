@@ -3,7 +3,7 @@
 
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
-import { useRef, useState, useMemo } from "react";
+import { useRef, useState, useMemo, useEffect } from "react";
 import * as THREE from "three";
 import { LANGUAGE_COLORS } from "../lib/constants";
 
@@ -17,7 +17,7 @@ export function CentralStar({ username }: { username: string }) {
         emissiveIntensity={4}
       />
       <Html distanceFactor={15} center position={[0, 4, 0]}>
-        <div className="text-white text-xl font-black bg-black/60 px-5 py-2 rounded-full border border-yellow-500/50 backdrop-blur-md shadow-[0_0_20px_rgba(252,211,77,0.5)]">
+        <div className="text-white text-xl font-black bg-black/60 px-5 py-2 rounded-full border border-yellow-500/50 backdrop-blur-md shadow-[0_0_20px_rgba(252,211,77,0.5)] pointer-events-none">
           @{username || "git-galaxy"}
         </div>
       </Html>
@@ -28,9 +28,11 @@ export function CentralStar({ username }: { username: string }) {
 export function AsteroidBelt({
   issueCount,
   planetRadius,
+  orbitPaused,
 }: {
   issueCount: number;
   planetRadius: number;
+  orbitPaused: boolean;
 }) {
   const beltRef = useRef<THREE.Group>(null);
   const asteroids = useMemo(() => {
@@ -47,15 +49,17 @@ export function AsteroidBelt({
         rotation: [Math.random() * Math.PI, Math.random() * Math.PI, 0] as [
           number,
           number,
-          number
+          number,
         ],
         scale: Math.random() * 0.08 + 0.02,
       };
     });
   }, [issueCount, planetRadius]);
 
-  useFrame(() => {
-    if (beltRef.current) beltRef.current.rotation.y += 0.002;
+  useFrame((_, delta) => {
+    // Only spin asteroids if the galaxy is not paused
+    if (beltRef.current && !orbitPaused)
+      beltRef.current.rotation.y += delta * 0.2;
   });
 
   return (
@@ -80,20 +84,25 @@ function Moon({
   speed,
   size,
   index,
+  orbitPaused,
 }: {
   orbitRadius: number;
   speed: number;
   size: number;
   index: number;
+  orbitPaused: boolean;
 }) {
   const moonRef = useRef<THREE.Mesh>(null);
-  const offset = index * (Math.PI / 2);
+  const angleRef = useRef(index * (Math.PI / 2)); // Custom time accumulator
 
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime() * speed + offset;
+  useFrame((_, delta) => {
+    // Only move the moon if the galaxy is not paused
+    if (!orbitPaused) {
+      angleRef.current += speed * delta;
+    }
     if (moonRef.current) {
-      moonRef.current.position.x = Math.cos(t) * orbitRadius;
-      moonRef.current.position.z = Math.sin(t) * orbitRadius;
+      moonRef.current.position.x = Math.cos(angleRef.current) * orbitRadius;
+      moonRef.current.position.z = Math.sin(angleRef.current) * orbitRadius;
     }
   });
 
@@ -108,32 +117,48 @@ function Moon({
 export function Planet({
   repo,
   index,
+  orbitPaused,
   setOrbitPaused,
 }: {
   repo: any;
   index: number;
+  orbitPaused: boolean;
   setOrbitPaused: (val: boolean) => void;
 }) {
   const orbitContainerRef = useRef<THREE.Group>(null);
   const planetMeshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
 
+  // Custom time accumulator to prevent teleporting when unpaused
+  const angleRef = useRef(index * 2);
+
   const orbitRadius = 8 + index * 4.5;
-  const speed = 0.4 - index * 0.015;
+  const speed = 0.5 - index * 0.015;
   const size = Math.max(0.5, Math.min(Math.log10(repo.size || 10) * 0.4, 3));
   const color = LANGUAGE_COLORS[repo.language] || LANGUAGE_COLORS.Default;
   const forks = Math.min(repo.forks_count || 0, 10);
 
-  useFrame(({ clock }) => {
-    const elapsedTime = clock.getElapsedTime();
+  // Change the mouse cursor globally when hovering over a clickable planet
+  useEffect(() => {
+    document.body.style.cursor = hovered ? "pointer" : "crosshair";
+    return () => {
+      document.body.style.cursor = "crosshair";
+    };
+  }, [hovered]);
+
+  useFrame((_, delta) => {
+    // 1. Only calculate new movement if the galaxy is NOT paused
+    if (!orbitPaused) {
+      angleRef.current += speed * delta;
+      if (planetMeshRef.current) planetMeshRef.current.rotation.y += delta;
+    }
+
+    // 2. Apply the position based on the frozen (or moving) angle
     if (orbitContainerRef.current) {
       orbitContainerRef.current.position.x =
-        Math.cos(elapsedTime * speed) * orbitRadius;
+        Math.cos(angleRef.current) * orbitRadius;
       orbitContainerRef.current.position.z =
-        Math.sin(elapsedTime * speed) * orbitRadius;
-    }
-    if (planetMeshRef.current) {
-      planetMeshRef.current.rotation.y += 0.01;
+        Math.sin(angleRef.current) * orbitRadius;
     }
   });
 
@@ -162,6 +187,11 @@ export function Planet({
             setHovered(false);
             setOrbitPaused(false);
           }}
+          // CLICK TO WARP EVENT ON THE 3D PLANET ITSELF
+          onClick={(e) => {
+            e.stopPropagation();
+            window.open(repo.html_url, "_blank");
+          }}
           scale={hovered ? 1.2 : 1}
         >
           <sphereGeometry args={[size, 64, 64]} />
@@ -180,6 +210,7 @@ export function Planet({
             orbitRadius={size + 0.8 + i * 0.3}
             speed={0.8 - i * 0.05}
             size={0.1}
+            orbitPaused={orbitPaused}
           />
         ))}
 
@@ -187,6 +218,7 @@ export function Planet({
           <AsteroidBelt
             issueCount={repo.open_issues_count}
             planetRadius={size}
+            orbitPaused={orbitPaused}
           />
         )}
 
@@ -197,7 +229,7 @@ export function Planet({
             position={[0, size + 2, 0]}
             zIndexRange={[100, 0]}
           >
-            <div className="flex flex-col w-64 bg-slate-900/95 p-4 rounded-xl border border-slate-600 backdrop-blur-xl shadow-[0_0_30px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in duration-200">
+            <div className="flex flex-col w-64 bg-slate-900/95 p-4 rounded-xl border border-slate-600 backdrop-blur-xl shadow-[0_0_30px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in duration-200 pointer-events-none">
               <div className="flex justify-between items-start mb-2">
                 <span className="text-white font-bold text-lg leading-tight">
                   {repo.name}
@@ -231,14 +263,9 @@ export function Planet({
                   </div>
                 </div>
               </div>
-              <a
-                href={repo.html_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full bg-white text-black font-bold py-2 rounded-lg text-sm text-center hover:bg-yellow-400 transition-colors shadow-lg cursor-pointer block"
-              >
-                Initiate Warp (Visit)
-              </a>
+              <div className="w-full bg-white/10 text-white/50 font-bold py-2 rounded-lg text-sm text-center border border-white/20 animate-pulse">
+                [ Click Planet to Warp ]
+              </div>
             </div>
           </Html>
         )}
