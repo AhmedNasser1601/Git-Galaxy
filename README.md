@@ -2,7 +2,7 @@
 
 > **Transform your GitHub profile into a living, interactive 3D solar system.**
 
-[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-App_Router-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![Three.js](https://img.shields.io/badge/Three.js-3D-black?style=for-the-badge&logo=three.js)](https://threejs.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-blue?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed_on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/)
@@ -15,20 +15,14 @@ Git-Galaxy is a completely dynamic, data-driven 3D visualization tool that takes
 
 ## ✨ Features
 
-- **Live-Telemetry Search:** Enter any GitHub username, and watch the galaxy rebuild itself in real-time.
+- **Live-Telemetry Search:** Enter any GitHub username, and watch the galaxy rebuild itself in real-time using a debounced API architecture.
 - **Procedural Planets:** Each repository becomes a planet. 
-  - **Size** is calculated algorithmically based on lines of code.
+  - **Size** is calculated logarithmically based on lines of code.
   - **Color** and glow are mapped to the repository's primary programming language.
-- **Interactive UI:** Hover over any planet to pause its orbit and reveal a glassmorphic data card with stats (Stars, Issues, Language) and a direct warp link to the code.
-- **Cinematic Rendering:** Powered by `react-three-fiber` and `@react-three/postprocessing` for high-performance bloom, lighting, and starry environments.
-
-## 🛠️ The Tech Stack
-
-- **Framework:** Next.js (App Router)
-- **3D Engine:** Three.js / React Three Fiber / Drei
-- **Styling:** Tailwind CSS (with arbitrary values for glassmorphism)
-- **Data Source:** GitHub REST API
-- **Hosting & CI/CD:** Vercel
+- **Orbital Stasis (Time Freeze):** Hover over any planet to pause the universe's rotation via precise Delta-Time calculation.
+- **Interactive HUD:** When a planet is hovered, a glassmorphic data card appears with real-time stats (Stars, Issues, Language).
+- **Warp Drive:** Click directly on any 3D planet to instantly open its GitHub repository in a new tab.
+- **Cinematic Rendering:** Powered by `react-three-fiber` and `@react-three/postprocessing` for high-performance bloom, custom lighting, and starry environments.
 
 ## 🚀 How It Works (The Data Mapping)
 
@@ -39,13 +33,34 @@ Git-Galaxy is a completely dynamic, data-driven 3D visualization tool that takes
 | **Open Issues** | `Asteroid Belts` | Tumbling space rocks that orbit buggy or highly-active repos. |
 | **Forks** | `Moons` | Smaller spheres locked in orbit around popular repositories. |
 
+## 🏗️ Architecture
+
+Built with a professional, modular component structure separating 3D physics from React UI:
+
+```text
+├── app/page.tsx               # Main state, API telemetry, and layout wrapper
+├── components/
+│   ├── HUD.tsx                # 2D Glassmorphic overlay & search UI
+│   ├── GalaxyCanvas.tsx       # 3D Environment, lighting, and post-processing
+│   └── CelestialBodies.tsx    # Math & meshes for Stars, Planets, Moons & Asteroids
+└── lib/constants.ts           # Language-to-Hex color mappings
+```
+
+## 🛠️ The Tech Stack
+
+- **Framework:** Next.js (React / App Router)
+- **3D Engine:** Three.js / React Three Fiber / Drei
+- **Styling:** Tailwind CSS (with arbitrary values for glassmorphism)
+- **Data Source:** GitHub REST API
+- **Hosting & CI/CD:** Vercel
+
 ## 💻 Local Development
 
 Want to spin up your own universe locally? 
 
 ```bash
 # Clone the repository
-git clone https://github.com/ahmednasser1601/git-galaxy.git
+git clone [https://github.com/ahmednasser1601/git-galaxy.git](https://github.com/ahmednasser1601/git-galaxy.git)
 
 # Navigate into the project
 cd git-galaxy
@@ -55,5 +70,10 @@ npm install
 
 # Start the warp drive (development server)
 npm run dev
+```
 
-Open http://localhost:3000 to view it in your browser
+Open `http://localhost:3000` to view it in your browser.
+
+---
+
+<img src="https://hits.sh/github.com/AhmedNasser1601/git-galaxy.svg?"/>
