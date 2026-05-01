@@ -1,12 +1,20 @@
-// app/page.tsx
+// app/[[...username]]/page.tsx
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { HUD } from '@/components/HUD';
 import { GalaxyCanvas } from '@/components/GalaxyCanvas';
 
 export default function GitGalaxy() {
-  const [searchInput, setSearchInput] = useState("");
+  const params = useParams();
+  const router = useRouter();
+
+  // 1. Read the URL. If the user goes to /ahmednasser1601, it captures it.
+  const initialUser = params?.username ? (params.username as string[])[0] : "";
+
+  // 2. Set the initial state to the URL parameter
+  const [searchInput, setSearchInput] = useState(initialUser);
   const [activeUser, setActiveUser] = useState("");
   const [repos, setRepos] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -17,7 +25,13 @@ export default function GitGalaxy() {
     if (!searchInput) {
       setRepos([]);
       setActiveUser("");
+      router.replace('/'); // Clean up the URL if the search box is empty
       return;
+    }
+
+    // 3. BONUS: Silently update the browser URL when typing a new search!
+    if (searchInput !== initialUser) {
+      router.replace(`/${searchInput}`);
     }
     
     setLoading(true);
@@ -25,13 +39,13 @@ export default function GitGalaxy() {
 
     const delayDebounceFn = setTimeout(async () => {
       try {
-        // 1. First, verify the user actually exists to handle 404s cleanly
+        // Verify user exists
         const userRes = await fetch(`https://api.github.com/users/${searchInput}`);
         if (!userRes.ok) {
           throw new Error("Signal lost: Commander not found in the GitHub database.");
         }
 
-        // 2. Fetch ALL repositories using pagination (Capped at 5 pages/500 repos to prevent crashes)
+        // Infinite Fetching Loop
         let allRepos: any[] = [];
         let page = 1;
         let keepFetching = true;
@@ -43,7 +57,6 @@ export default function GitGalaxy() {
           const data = await res.json();
           allRepos = [...allRepos, ...data];
           
-          // If we got less than 100 items, it means we hit the last page!
           if (data.length < 100 || page >= 5) {
             keepFetching = false;
           } else {
@@ -56,14 +69,14 @@ export default function GitGalaxy() {
       } catch (err: any) {
         setError(err.message);
         setRepos([]);
-        setActiveUser(""); // Clear the active user so the central star disappears on error
+        setActiveUser(""); 
       } finally {
         setLoading(false);
       }
     }, 800);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchInput]);
+  }, [searchInput, initialUser, router]); // Added router and initialUser to dependencies
 
   return (
     <div className="w-screen h-screen bg-[#020205] overflow-hidden relative">
