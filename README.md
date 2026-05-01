@@ -15,6 +15,8 @@ Git-Galaxy is a completely dynamic, data-driven 3D visualization tool that takes
 
 ## ✨ Features
 
+- **Shareable Universes (Dynamic Routing):** Append any username to the URL (e.g., `/ahmednasser1601`) to instantly load their galaxy, perfect for sharing on social media or portfolios.
+- **Infinite Scale:** Implements background API pagination loops to bypass default limits, fetching and rendering your entire repository history with self-adjusting orbital physics.
 - **Live-Telemetry Search:** Enter any GitHub username, and watch the galaxy rebuild itself in real-time using a debounced API architecture.
 - **Procedural Planets:** Each repository becomes a planet. 
   - **Size** is calculated logarithmically based on lines of code.
@@ -37,14 +39,17 @@ Git-Galaxy is a completely dynamic, data-driven 3D visualization tool that takes
 
 Built with a professional, modular component structure separating 3D physics from React UI:
 
-```text
-├── app/page.tsx               # Main state, API telemetry, and layout wrapper
-├── components/
-│   ├── HUD.tsx                # 2D Glassmorphic overlay & search UI
-│   ├── GalaxyCanvas.tsx       # 3D Environment, lighting, and post-processing
-│   └── CelestialBodies.tsx    # Math & meshes for Stars, Planets, Moons & Asteroids
-└── lib/constants.ts           # Language-to-Hex color mappings
-```
+    ├── app/
+    │   ├── layout.tsx
+    │   └── [[...username]]/
+    │       └── page.tsx           # Dynamic routing, API telemetry, and main layout
+    ├── components/
+    │   ├── HUD.tsx                # 2D Glassmorphic overlay & search UI
+    │   ├── GalaxyCanvas.tsx       # 3D Environment, lighting, and post-processing
+    │   └── CelestialBodies.tsx    # Math & meshes for Stars, Planets, Moons & Asteroids
+    └── lib/
+        └── constants.ts           # Language-to-Hex color mappings
+
 
 ## 🛠️ The Tech Stack
 
@@ -58,21 +63,19 @@ Built with a professional, modular component structure separating 3D physics fro
 
 Want to spin up your own universe locally? 
 
-```bash
-# Clone the repository
-git clone https://github.com/ahmednasser1601/git-galaxy.git
+    # Clone the repository
+    git clone https://github.com/ahmednasser1601/git-galaxy.git
 
-# Navigate into the project
-cd git-galaxy
+    # Navigate into the project
+    cd git-galaxy
 
-# Install the dependencies
-npm install
+    # Install the dependencies
+    npm install
 
-# Start the warp drive (development server)
-npm run dev
-```
+    # Start the warp drive (development server)
+    npm run dev
 
-Open `http://localhost:3000` to view it in your browser.
+Open http://localhost:3000 to view it in your browser.
 
 ---
 
