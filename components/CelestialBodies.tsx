@@ -2,7 +2,8 @@
 "use client";
 
 import { useFrame } from '@react-three/fiber';
-import { Html } from '@react-three/drei';
+// IMPORT TEXT AND BILLBOARD HERE
+import { Html, Text, Billboard } from '@react-three/drei';
 import { useRef, useState, useMemo, useEffect } from 'react';
 import * as THREE from 'three';
 import { LANGUAGE_COLORS } from '../lib/constants';
@@ -37,7 +38,6 @@ export function AsteroidBelt({ issueCount, planetRadius, orbitPaused }: { issueC
   }, [issueCount, planetRadius]);
 
   useFrame((_, delta) => { 
-    // Only spin asteroids if the galaxy is not paused
     if (beltRef.current && !orbitPaused) beltRef.current.rotation.y += delta * 0.2; 
   });
 
@@ -55,10 +55,9 @@ export function AsteroidBelt({ issueCount, planetRadius, orbitPaused }: { issueC
 
 function Moon({ orbitRadius, speed, size, index, orbitPaused }: { orbitRadius: number, speed: number, size: number, index: number, orbitPaused: boolean }) {
   const moonRef = useRef<THREE.Mesh>(null);
-  const angleRef = useRef(index * (Math.PI / 2)); // Custom time accumulator
+  const angleRef = useRef(index * (Math.PI / 2)); 
 
   useFrame((_, delta) => {
-    // Only move the moon if the galaxy is not paused
     if (!orbitPaused) {
       angleRef.current += speed * delta;
     }
@@ -81,32 +80,25 @@ export function Planet({ repo, index, orbitPaused, setOrbitPaused }: { repo: any
   const planetMeshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
 
-  // Custom time accumulator to prevent teleporting when unpaused
   const angleRef = useRef(index * 2); 
 
-  // --- UPDATED MATH FOR UNLIMITED PLANETS ---
-  // Tighter orbits (2.5 instead of 4.5) so large repos counts don't fly off screen
   const orbitRadius = 6 + (index * 2.5); 
-  // Division-based speed so it never hits negative numbers (backwards orbiting)
   const speed = 0.5 / (1 + index * 0.05); 
   const size = Math.max(0.5, Math.min(Math.log10(repo.size || 10) * 0.4, 3)); 
   const color = LANGUAGE_COLORS[repo.language] || LANGUAGE_COLORS.Default;
   const forks = Math.min(repo.forks_count || 0, 10);
 
-  // Change the mouse cursor globally when hovering over a clickable planet
   useEffect(() => {
     document.body.style.cursor = hovered ? 'pointer' : 'crosshair';
     return () => { document.body.style.cursor = 'crosshair'; };
   }, [hovered]);
 
   useFrame((_, delta) => {
-    // 1. Only calculate new movement if the galaxy is NOT paused
     if (!orbitPaused) {
       angleRef.current += speed * delta;
       if (planetMeshRef.current) planetMeshRef.current.rotation.y += delta;
     }
 
-    // 2. Apply the position based on the frozen (or moving) angle
     if (orbitContainerRef.current) {
       orbitContainerRef.current.position.x = Math.cos(angleRef.current) * orbitRadius;
       orbitContainerRef.current.position.z = Math.sin(angleRef.current) * orbitRadius;
@@ -125,13 +117,29 @@ export function Planet({ repo, index, orbitPaused, setOrbitPaused }: { repo: any
           ref={planetMeshRef}
           onPointerOver={(e) => { e.stopPropagation(); setHovered(true); setOrbitPaused(true); }}
           onPointerOut={(e) => { e.stopPropagation(); setHovered(false); setOrbitPaused(false); }}
-          // CLICK TO WARP EVENT ON THE 3D PLANET ITSELF
           onClick={(e) => { e.stopPropagation(); window.open(repo.html_url, '_blank'); }}
           scale={hovered ? 1.2 : 1}
         >
           <sphereGeometry args={[size, 64, 64]} />
           <meshStandardMaterial color={color} emissive={color} emissiveIntensity={hovered ? 1.5 : 0.2} roughness={0.2} />
         </mesh>
+
+        {/* NEW: FLOATING 3D TEXT LABEL */}
+        {/* We hide this when hovered so it doesn't overlap with the big details card */}
+        {!hovered && (
+          <Billboard position={[0, size + 0.3, 0]}>
+            <Text 
+              fontSize={0.3} 
+              color={color} 
+              anchorX="center" 
+              anchorY="bottom"
+              outlineWidth={0.03}
+              outlineColor="#000000" // Black outline makes it readable against the stars
+            >
+              {repo.name}
+            </Text>
+          </Billboard>
+        )}
 
         {Array.from({ length: forks }).map((_, i) => (
           <Moon key={i} index={i} orbitRadius={size + 0.8 + (i * 0.3)} speed={0.8 - (i * 0.05)} size={0.1} orbitPaused={orbitPaused} />
