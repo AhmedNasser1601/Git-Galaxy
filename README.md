@@ -60,7 +60,7 @@ Want to spin up your own universe locally?
 
 ```bash
 # Clone the repository
-git clone [https://github.com/ahmednasser1601/git-galaxy.git](https://github.com/ahmednasser1601/git-galaxy.git)
+git clone https://github.com/ahmednasser1601/git-galaxy.git
 
 # Navigate into the project
 cd git-galaxy
