@@ -2,13 +2,12 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { HUD } from '@/components/HUD';
 import { GalaxyCanvas } from '@/components/GalaxyCanvas';
 
 export default function GitGalaxy() {
   const params = useParams();
-  const router = useRouter();
 
   // 1. Read the URL to see if a username was shared
   const initialUser = params?.username ? (params.username as string[])[0] : "";
@@ -26,13 +25,14 @@ export default function GitGalaxy() {
     if (!searchInput) {
       setRepos([]);
       setActiveUser("");
-      router.replace('/'); 
+      // Silently update URL back to root without stealing focus
+      window.history.replaceState(null, '', '/'); 
       return;
     }
 
     // Silently update the URL bar when typing a new search
     if (searchInput !== initialUser) {
-      router.replace(`/${searchInput}`);
+      window.history.replaceState(null, '', `/${searchInput}`);
     }
     
     setLoading(true);
@@ -77,7 +77,7 @@ export default function GitGalaxy() {
     }, 800);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchInput, initialUser, router]); 
+  }, [searchInput, initialUser]); 
 
   return (
     <div className="w-screen h-screen bg-[#020205] overflow-hidden relative">
