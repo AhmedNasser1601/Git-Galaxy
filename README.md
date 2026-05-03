@@ -7,6 +7,8 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-blue?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed_on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/)
 
+*![Git-Galaxy Preview](./app/opengraph-image.jpg)*
+
 Git-Galaxy is a completely dynamic, data-driven 3D visualization tool that takes any GitHub username and turns their open-source contributions into a beautiful, explorable cosmos. 
 
 ## 🌍 **[Explore the Galaxy Live Here](https://your-git-galaxy.vercel.app)**
