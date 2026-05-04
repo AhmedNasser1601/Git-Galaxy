@@ -1,4 +1,3 @@
-// app/[[...username]]/page.tsx
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -9,44 +8,43 @@ import { GalaxyCanvas } from '@/components/GalaxyCanvas';
 export default function GitGalaxy() {
   const params = useParams();
 
-  // 1. Read the URL to see if a username was shared
   const initialUser = params?.username ? (params.username as string[])[0] : "";
 
-  // 2. Set the state
   const [searchInput, setSearchInput] = useState(initialUser);
   const [activeUser, setActiveUser] = useState("");
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [repos, setRepos] = useState<any[]>([]);
+  const [contributors, setContributors] = useState<Record<number, any[]>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [orbitPaused, setOrbitPaused] = useState(false);
 
   useEffect(() => {
-    // Clean up if search box is emptied
     if (!searchInput) {
       setRepos([]);
+      setContributors({});
       setActiveUser("");
-      // Silently update URL back to root without stealing focus
-      window.history.replaceState(null, '', '/'); 
+      setUserProfile(null);
+      window.history.replaceState(null, '', '/');
       return;
     }
 
-    // Silently update the URL bar when typing a new search
     if (searchInput !== initialUser) {
       window.history.replaceState(null, '', `/${searchInput}`);
     }
-    
+
     setLoading(true);
     setError("");
 
     const delayDebounceFn = setTimeout(async () => {
       try {
-        // Verify user exists
         const userRes = await fetch(`https://api.github.com/users/${searchInput}`);
         if (!userRes.ok) {
           throw new Error("Signal lost: Commander not found in the GitHub database.");
         }
+        const profileData = await userRes.json();
+        setUserProfile(profileData);
 
-        // Infinite Fetching Loop
         let allRepos: any[] = [];
         let page = 1;
         let keepFetching = true;
@@ -54,10 +52,10 @@ export default function GitGalaxy() {
         while (keepFetching) {
           const res = await fetch(`https://api.github.com/users/${searchInput}/repos?sort=pushed&per_page=100&page=${page}`);
           if (!res.ok) throw new Error("API rate limit exceeded.");
-          
+
           const data = await res.json();
           allRepos = [...allRepos, ...data];
-          
+
           if (data.length < 100 || page >= 5) {
             keepFetching = false;
           } else {
@@ -67,32 +65,57 @@ export default function GitGalaxy() {
 
         setRepos(allRepos);
         setActiveUser(searchInput);
+
+        const contribMap: Record<number, any[]> = {};
+        const topRepos = allRepos.slice(0, 20);
+
+        await Promise.all(
+          topRepos.map(async (repo) => {
+            try {
+              const res = await fetch(`https://api.github.com/repos/${searchInput}/${repo.name}/contributors?per_page=8`);
+              if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data)) {
+                  contribMap[repo.id] = data.slice(0, 6);
+                }
+              }
+            } catch {
+              contribMap[repo.id] = [];
+            }
+          })
+        );
+
+        setContributors(contribMap);
       } catch (err: any) {
         setError(err.message);
         setRepos([]);
-        setActiveUser(""); 
+        setContributors({});
+        setActiveUser("");
+        setUserProfile(null);
       } finally {
         setLoading(false);
       }
     }, 800);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchInput, initialUser]); 
+  }, [searchInput, initialUser]);
 
   return (
     <div className="w-screen h-screen bg-[#020205] overflow-hidden relative">
-      <GalaxyCanvas 
-        repos={repos} 
-        activeUser={activeUser} 
-        orbitPaused={orbitPaused} 
-        setOrbitPaused={setOrbitPaused} 
+      <GalaxyCanvas
+        repos={repos}
+        contributors={contributors}
+        activeUser={activeUser}
+        userProfile={userProfile}
+        orbitPaused={orbitPaused}
+        setOrbitPaused={setOrbitPaused}
       />
-      <HUD 
-        searchInput={searchInput} 
-        setSearchInput={setSearchInput} 
-        loading={loading} 
-        error={error} 
-        repos={repos} 
+      <HUD
+        searchInput={searchInput}
+        setSearchInput={setSearchInput}
+        loading={loading}
+        error={error}
+        repos={repos}
       />
     </div>
   );
